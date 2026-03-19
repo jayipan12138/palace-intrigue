@@ -328,7 +328,7 @@ class PalaceHandler(SimpleHTTPRequestHandler):
 
 
 def main():
-    port = int(os.environ.get("PORT", 8080))
+    port = int(os.environ.get("PORT", 6891))
     server = HTTPServer(("0.0.0.0", port), PalaceHandler)
     print(f"三宫六院 · 总控台 已启动: http://localhost:{port}")
     print(f"按 Ctrl+C 退出")

@@ -4,11 +4,11 @@ services:
   palace-intrigue:
     build: .
     ports:
-      - "8080:8080"
+      - "6891:6891"
     env_file:
       - .env
     environment:
-      - PORT=8080
+      - PORT=6891
     volumes:
       - ./data:/app/data
       - ./agents:/app/agents:ro

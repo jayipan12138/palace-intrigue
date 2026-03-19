@@ -64,7 +64,7 @@ LLM_API_KEY=your-api-key-here
 LLM_MODEL=gpt-4o-mini
 
 # 服务端口
-PORT=8080
+PORT=6891
 EOF
     }
     warn "已创建 .env 文件，请编辑填入你的 LLM API Key"
@@ -170,4 +170,4 @@ if [ "$OPENCLAW_MODE" = true ]; then
     echo "    在 OpenClaw 中使用 palace-empress, palace-consort_gui 等 Agent ID"
 fi
 echo ""
-echo -e "${GOLD}访问 Dashboard: http://localhost:8080${NC}"
+echo -e "${GOLD}访问 Dashboard: http://localhost:6891${NC}"

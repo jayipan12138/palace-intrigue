@@ -32,7 +32,7 @@ cp .env.example .env
 
 # 4. 启动 Dashboard
 python3 dashboard/server.py
-# 访问 http://localhost:8080
+# 访问 http://localhost:6891
 ```
 
 ### 方式二：Docker 部署
@@ -41,7 +41,7 @@ python3 dashboard/server.py
 cp .env.example .env
 # 编辑 .env 填入 API Key
 docker compose up -d
-# 访问 http://localhost:8080
+# 访问 http://localhost:6891
 ```
 
 ### 方式三：OpenClaw 集成

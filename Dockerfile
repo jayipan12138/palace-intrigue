@@ -18,9 +18,9 @@ RUN useradd -m -s /bin/bash palace && \
     chown -R palace:palace /app
 USER palace
 
-EXPOSE 8080
+EXPOSE 6891
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:8080/api/simulation-status')" || exit 1
+    CMD python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:6891/api/simulation-status')" || exit 1
 
 CMD ["python3", "dashboard/server.py"]
