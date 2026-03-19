@@ -1,0 +1,30 @@
+# 环境与密钥
+.env
+*.pyc
+__pycache__/
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# 数据（运行时生成）
+data/result.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# 日志
+*.log
+/tmp/

@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三宫六院 · 总控台</title>
+<style>
+/* === RESET & BASE === */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a25;--surface3:#222233;
+  --border:#2a2a3a;--text:#e8e8f0;--text2:#9898a8;--text3:#686878;
+  --gold:#d4a853;--gold2:#b8943a;--red:#e84057;--green:#4ecdc4;
+  --blue:#4a9eff;--purple:#a855f7;--pink:#ec4899;--orange:#f59e0b;
+  --empress:#ff6b6b;--gui:#ec4899;--shu:#4ecdc4;--de:#a855f7;
+  --hua:#f59e0b;--dowager:#9ca3af;--emperor:#d4a853;--eunuch:#6b7280;
+}
+body{font-family:'Noto Serif SC','Songti SC',serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+/* === HEADER === */
+.header{background:linear-gradient(135deg,#1a0a0a,#0a0a1a,#1a0a1a);border-bottom:1px solid var(--gold2);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header h1{font-size:20px;color:var(--gold);letter-spacing:4px;text-shadow:0 0 20px rgba(212,168,83,0.3)}
+.header-right{display:flex;align-items:center;gap:16px}
+.day-badge{background:var(--surface2);border:1px solid var(--gold2);border-radius:20px;padding:4px 16px;color:var(--gold);font-size:13px}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:4px}
+.sync-dot.off{background:var(--red)}
+/* === TABS === */
+.tabs{display:flex;gap:2px;padding:0 24px;background:var(--surface);border-bottom:1px solid var(--border)}
+.tab{padding:10px 20px;cursor:pointer;color:var(--text2);font-size:13px;border-bottom:2px solid transparent;transition:all .2s;letter-spacing:1px}
+.tab:hover{color:var(--text);background:var(--surface2)}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);background:var(--surface2)}
+/* === PANELS === */
+.panel{display:none;padding:20px 24px;min-height:calc(100vh - 100px)}
+.panel.active{display:block}
+/* === KANBAN === */
+.kanban-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:16px}
+.char-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;transition:all .3s;position:relative;overflow:hidden}
+.char-card:hover{border-color:var(--gold2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.4)}
+.char-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.char-card[data-id="empress"]::before{background:var(--empress)}
+.char-card[data-id="consort_gui"]::before{background:var(--gui)}
+.char-card[data-id="consort_shu"]::before{background:var(--shu)}
+.char-card[data-id="consort_de"]::before{background:var(--de)}
+.char-card[data-id="consort_hua"]::before{background:var(--hua)}
+.char-card[data-id="empress_dowager"]::before{background:var(--dowager)}
+.char-card[data-id="emperor"]::before{background:var(--emperor)}
+.char-card[data-id="eunuch"]::before{background:var(--eunuch)}
+.char-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.char-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid var(--border)}
+.char-name{font-size:15px;font-weight:bold}
+.char-title{font-size:11px;color:var(--text2);margin-top:2px}
+.char-residence{font-size:11px;color:var(--text3)}
+.stat-row{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:12px}
+.stat-label{width:48px;color:var(--text2);flex-shrink:0}
+.stat-bar{flex:1;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.stat-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.stat-fill.favor{background:linear-gradient(90deg,var(--red),var(--pink))}
+.stat-fill.influence{background:linear-gradient(90deg,var(--blue),var(--purple))}
+.stat-fill.health{background:linear-gradient(90deg,var(--green),#2dd4bf)}
+.stat-val{width:30px;text-align:right;font-size:11px;color:var(--text2)}
+.char-faction{display:inline-block;font-size:10px;padding:2px 8px;border-radius:8px;background:var(--surface3);color:var(--text2);margin-top:8px}
+.char-status{position:absolute;top:12px;right:12px;font-size:10px;padding:2px 8px;border-radius:8px}
+.char-status.normal{background:rgba(78,205,196,0.15);color:var(--green)}
+.char-status.cold{background:rgba(59,130,246,0.15);color:var(--blue)}
+.char-status.dead{background:rgba(232,64,87,0.15);color:var(--red)}
+/* === DISCUSS === */
+.discuss-layout{display:grid;grid-template-columns:260px 1fr;gap:16px;height:calc(100vh - 140px)}
+.discuss-sidebar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;overflow-y:auto}
+.discuss-main{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.discuss-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.discuss-input{border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.discuss-input input{flex:1;min-width:200px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;outline:none}
+.discuss-input input:focus{border-color:var(--gold2)}
+.msg-bubble{max-width:85%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;animation:fadeIn .3s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.msg-system{align-self:center;background:var(--surface3);color:var(--text2);font-size:12px;border-radius:16px;padding:6px 16px;text-align:center}
+.msg-emperor{align-self:flex-end;background:linear-gradient(135deg,#3d2800,#2d1f00);border:1px solid var(--gold2);color:var(--gold)}
+.msg-decree{align-self:center;background:linear-gradient(135deg,#2d1f00,#1a0a2a);border:1px solid var(--gold);color:var(--gold);text-align:center;font-weight:bold;padding:12px 20px;letter-spacing:1px}
+.msg-official{align-self:flex-start;background:var(--surface2);border:1px solid var(--border)}
+.msg-speaker{font-size:11px;font-weight:bold;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.msg-emotion{font-size:10px;padding:1px 6px;border-radius:8px;background:var(--surface3)}
+/* === CONTROLS === */
+.section-title{font-size:16px;color:var(--gold);margin-bottom:12px;letter-spacing:2px;display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';width:3px;height:16px;background:var(--gold);border-radius:2px}
+.btn{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:12px;transition:all .2s;font-family:inherit}
+.btn:hover{border-color:var(--gold2);background:var(--surface3)}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+.btn-gold{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#000;border-color:var(--gold);font-weight:bold}
+.btn-gold:hover{box-shadow:0 0 16px rgba(212,168,83,0.3)}
+.btn-red{border-color:var(--red);color:var(--red)}
+.btn-red:hover{background:rgba(232,64,87,0.1)}
+.btn-sm{padding:5px 10px;font-size:11px}
+/* === PARTICIPANT SELECTOR === */
+.participant-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+.participant-item{display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;transition:all .2s}
+.participant-item:hover{border-color:var(--gold2)}
+.participant-item.selected{border-color:var(--gold);background:rgba(212,168,83,0.1)}
+.participant-item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+/* === EVENT LOG === */
+.event-list{display:flex;flex-direction:column;gap:6px;max-height:calc(100vh - 200px);overflow-y:auto}
+.event-item{display:flex;gap:10px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:12px;line-height:1.5}
+.event-day{color:var(--gold);font-weight:bold;flex-shrink:0;width:60px}
+.event-msg{color:var(--text2)}
+/* === SIM LOG === */
+.sim-log{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-top:16px;max-height:500px;overflow-y:auto;font-size:12px;line-height:1.8;white-space:pre-wrap;color:var(--text2);font-family:'Courier New',monospace}
+/* === CONTROLS BAR === */
+.control-bar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+/* === LOADING === */
+.loading{display:flex;align-items:center;justify-content:center;gap:8px;padding:40px;color:var(--text2)}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* === SCROLLBAR === */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text3)}
+</style>
+</head>
+<body>
+<!-- HEADER -->
+<div class="header">
+  <h1>三宫六院 · 总控台</h1>
+  <div class="header-right">
+    <span class="day-badge" id="dayBadge">第0天 · 春季</span>
+    <span><span class="sync-dot" id="syncDot"></span><span id="syncText" style="font-size:12px;color:var(--text2)">已连接</span></span>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" data-tab="kanban">人物看板</div>
+  <div class="tab" data-tab="discuss">宫斗议政</div>
+  <div class="tab" data-tab="events">事件簿</div>
+  <div class="tab" data-tab="simulate">模拟推演</div>
+</div>
+
+<!-- PANEL: KANBAN -->
+<div class="panel active" id="panel-kanban">
+  <div class="section-title">后宫众人</div>
+  <div class="kanban-grid" id="kanbanGrid"></div>
+</div>
+
+<!-- PANEL: DISCUSS -->
+<div class="panel" id="panel-discuss">
+  <!-- placeholder, filled by JS -->
+</div>
+
+<!-- PANEL: EVENTS -->
+<div class="panel" id="panel-events">
+  <div class="section-title">大事记</div>
+  <div class="event-list" id="eventList"></div>
+</div>
+
+<!-- PANEL: SIMULATE -->
+<div class="panel" id="panel-simulate">
+  <div class="section-title">模拟推演</div>
+  <div class="control-bar">
+    <button class="btn btn-gold" id="btnSimDay" onclick="simulateDay()">推进一天</button>
+    <span id="simStatus" style="font-size:12px;color:var(--text2)">待命</span>
+  </div>
+  <div class="sim-log" id="simLog">等待开始模拟...</div>
+</div>
+
+<script>
+// ─── STATE ───
+let state = { characters: {}, events: [], day: 0, season: '春' };
+let currentTab = 'kanban';
+let discussSession = null;
+let pollTimer = null;
+
+const CHAR_EMOJI = {
+  empress:'👸',consort_gui:'💃',consort_shu:'🎭',consort_de:'🌸',
+  consort_hua:'⚔️',empress_dowager:'🏛️',emperor:'👑',eunuch:'🔑'
+};
+const CHAR_COLOR = {
+  empress:'var(--empress)',consort_gui:'var(--gui)',consort_shu:'var(--shu)',
+  consort_de:'var(--de)',consort_hua:'var(--hua)',empress_dowager:'var(--dowager)',
+  emperor:'var(--emperor)',eunuch:'var(--eunuch)'
+};
+const EMOTION_MAP = {
+  angry:'😠',sad:'😢',amused:'😏',worried:'😰',confident:'😤',thinking:'🤔'
+};
+
+// ─── API ───
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers: {'Content-Type':'application/json'} };
+  if (body) opts.body = JSON.stringify(body);
+  try {
+    const r = await fetch(path, opts);
+    return await r.json();
+  } catch(e) {
+    console.error('API error:', e);
+    return { error: e.message };
+  }
+}
+
+// ─── POLLING ───
+async function refresh() {
+  const [chars, events, simSt] = await Promise.all([
+    api('/api/characters'),
+    api('/api/events'),
+    api('/api/simulation-status'),
+  ]);
+  if (!chars.error) state.characters = chars;
+  if (!events.error) state.events = events.events || [];
+  if (!simSt.error) {
+    state.day = simSt.day;
+    document.getElementById('dayBadge').textContent = `第${simSt.day}天`;
+  }
+  renderKanban();
+  renderEvents();
+}
+
+function startPolling() {
+  refresh();
+  pollTimer = setInterval(refresh, 3000);
+}
+
+// ─── KANBAN RENDER ───
+function renderKanban() {
+  const grid = document.getElementById('kanbanGrid');
+  const order = ['empress','consort_gui','consort_shu','consort_de','consort_hua','empress_dowager','emperor','eunuch'];
+  let html = '';
+  for (const id of order) {
+    const c = state.characters[id];
+    if (!c) continue;
+    const statusClass = c.in_cold_palace ? 'cold' : (!c.alive ? 'dead' : 'normal');
+    const statusText = c.in_cold_palace ? '❄️ 冷宫' : (!c.alive ? '💀 薨逝' : '正常');
+    const showFavor = !['emperor','empress_dowager','eunuch'].includes(id);
+    html += `
+    <div class="char-card" data-id="${id}">
+      <div class="char-status ${statusClass}">${statusText}</div>
+      <div class="char-header">
+        <div class="char-avatar" style="border-color:${CHAR_COLOR[id]};background:${CHAR_COLOR[id]}20">
+          ${CHAR_EMOJI[id]}
+        </div>
+        <div>
+          <div class="char-name">${c.name}</div>
+          <div class="char-title">${c.title}</div>
+          <div class="char-residence">${c.residence}</div>
+        </div>
+      </div>
+      ${showFavor ? `
+      <div class="stat-row">
+        <span class="stat-label">恩宠</span>
+        <div class="stat-bar"><div class="stat-fill favor" style="width:${c.favor}%"></div></div>
+        <span class="stat-val">${c.favor}</span>
+      </div>` : ''}
+      <div class="stat-row">
+        <span class="stat-label">影响力</span>
+        <div class="stat-bar"><div class="stat-fill influence" style="width:${c.influence}%"></div></div>
+        <span class="stat-val">${c.influence}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">健康</span>
+        <div class="stat-bar"><div class="stat-fill health" style="width:${c.health}%"></div></div>
+        <span class="stat-val">${c.health}</span>
+      </div>
+      <div class="char-faction">${c.faction}</div>
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+// ─── EVENTS RENDER ───
+function renderEvents() {
+  const list = document.getElementById('eventList');
+  if (state.events.length === 0) {
+    list.innerHTML = '<div style="color:var(--text3);padding:20px;text-align:center">暂无事件，请先推进模拟</div>';
+    return;
+  }
+  let html = '';
+  for (const e of [...state.events].reverse()) {
+    html += `<div class="event-item"><span class="event-day">第${e.day}天</span><span class="event-msg">${e.message}</span></div>`;
+  }
+  list.innerHTML = html;
+}
+
+// ─── DISCUSS ───
+function renderDiscussPanel() {
+  const panel = document.getElementById('panel-discuss');
+  panel.innerHTML = `
+    <div class="discuss-layout">
+      <div class="discuss-sidebar">
+        <div class="section-title" style="font-size:14px">开启议政</div>
+        <div style="margin:10px 0">
+          <label style="font-size:12px;color:var(--text2)">议题</label>
+          <input id="discussTopic" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:12px;margin-top:4px;outline:none" placeholder="输入议题..." value="后宫权力分配之争">
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin:8px 0">选择参与者</div>
+        <div class="participant-grid" id="participantGrid"></div>
+        <button class="btn btn-gold" style="width:100%;margin-top:12px" id="btnStartDiscuss" onclick="startDiscuss()">开启议政</button>
+        <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px">快捷操作</div>
+          <button class="btn btn-sm" style="width:100%;margin-bottom:6px" onclick="advanceDiscuss()">推进讨论</button>
+          <button class="btn btn-sm btn-red" style="width:100%;margin-bottom:6px" onclick="fateDice()">🎲 命运骰子</button>
+          <button class="btn btn-sm" style="width:100%;margin-bottom:6px" onclick="concludeDiscuss()">散朝</button>
+        </div>
+      </div>
+      <div class="discuss-main">
+        <div class="discuss-messages" id="discussMessages">
+          <div style="color:var(--text3);text-align:center;padding:60px 0">选择参与者并开启议政</div>
+        </div>
+        <div class="discuss-input">
+          <input id="emperorInput" placeholder="朕有话说..." onkeydown="if(event.key==='Enter')sendEmperorMsg()">
+          <button class="btn btn-gold btn-sm" onclick="sendEmperorMsg()">发言</button>
+          <button class="btn btn-sm" onclick="sendDecree()">颁旨</button>
+        </div>
+      </div>
+    </div>
+  `;
+  renderParticipantGrid();
+}
+
+function renderParticipantGrid() {
+  const grid = document.getElementById('participantGrid');
+  if (!grid) return;
+  const ids = ['empress','consort_gui','consort_shu','consort_de','consort_hua','empress_dowager','eunuch'];
+  const defaultSelected = ['empress','consort_gui','consort_de','consort_hua'];
+  let html = '';
+  for (const id of ids) {
+    const c = state.characters[id];
+    const name = c ? c.name.split('·')[1] || c.name : id;
+    const sel = defaultSelected.includes(id) ? 'selected' : '';
+    html += `<div class="participant-item ${sel}" data-pid="${id}" onclick="toggleParticipant(this)">
+      <span class="dot" style="background:${CHAR_COLOR[id]}"></span>
+      ${CHAR_EMOJI[id]} ${name}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function toggleParticipant(el) {
+  el.classList.toggle('selected');
+}
+
+function getSelectedParticipants() {
+  return [...document.querySelectorAll('.participant-item.selected')].map(e => e.dataset.pid);
+}
+
+async function startDiscuss() {
+  const topic = document.getElementById('discussTopic').value || '后宫权力分配';
+  const participants = getSelectedParticipants();
+  if (participants.length < 2) { alert('至少选择2位参与者'); return; }
+  const btn = document.getElementById('btnStartDiscuss');
+  btn.disabled = true; btn.textContent = '开启中...';
+  const data = await api('/api/discuss/start', 'POST', { topic, participants });
+  btn.disabled = false; btn.textContent = '开启议政';
+  if (data.id) {
+    discussSession = data;
+    renderDiscussMessages();
+    // 自动推进第一轮
+    await advanceDiscuss();
+  }
+}
+
+async function advanceDiscuss() {
+  if (!discussSession || discussSession.status !== 'active') return;
+  showDiscussLoading();
+  const data = await api('/api/discuss/advance', 'POST', { session_id: discussSession.id });
+  if (data.messages) {
+    discussSession.messages = [...(discussSession.messages||[]), ...data.messages];
+    discussSession.round = data.round;
+    renderDiscussMessages();
+  }
+}
+
+async function sendEmperorMsg() {
+  if (!discussSession || discussSession.status !== 'active') return;
+  const input = document.getElementById('emperorInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  showDiscussLoading();
+  const data = await api('/api/discuss/advance', 'POST', {
+    session_id: discussSession.id, emperor_message: msg
+  });
+  if (data.messages) {
+    discussSession.messages = [...(discussSession.messages||[]), ...data.messages];
+    renderDiscussMessages();
+  }
+}
+
+async function sendDecree() {
+  if (!discussSession || discussSession.status !== 'active') return;
+  const decree = prompt('请输入圣旨内容：');
+  if (!decree) return;
+  showDiscussLoading();
+  const data = await api('/api/discuss/advance', 'POST', {
+    session_id: discussSession.id, decree
+  });
+  if (data.messages) {
+    discussSession.messages = [...(discussSession.messages||[]), ...data.messages];
+    renderDiscussMessages();
+  }
+}
+
+async function fateDice() {
+  if (!discussSession || discussSession.status !== 'active') return;
+  showDiscussLoading();
+  const data = await api('/api/discuss/fate', 'POST', { session_id: discussSession.id });
+  if (data.messages) {
+    discussSession.messages = [...(discussSession.messages||[]), ...data.messages];
+    renderDiscussMessages();
+  }
+}
+
+async function concludeDiscuss() {
+  if (!discussSession) return;
+  showDiscussLoading();
+  const data = await api('/api/discuss/conclude', 'POST', { session_id: discussSession.id });
+  if (data.summary) {
+    discussSession.status = 'concluded';
+    discussSession.messages.push({ type:'system', content:'【散朝总结】'+data.summary, timestamp:Date.now()/1000 });
+    renderDiscussMessages();
+  }
+}
+
+function showDiscussLoading() {
+  const container = document.getElementById('discussMessages');
+  const loader = document.createElement('div');
+  loader.className = 'loading';
+  loader.id = 'discussLoader';
+  loader.innerHTML = '<div class="spinner"></div>AI 思考中...';
+  container.appendChild(loader);
+  container.scrollTop = container.scrollHeight;
+}
+
+function renderDiscussMessages() {
+  const container = document.getElementById('discussMessages');
+  if (!discussSession || !discussSession.messages) {
+    container.innerHTML = '<div style="color:var(--text3);text-align:center;padding:60px 0">选择参与者并开启议政</div>';
+    return;
+  }
+  let html = '';
+  for (const m of discussSession.messages) {
+    if (m.type === 'system') {
+      html += `<div class="msg-bubble msg-system">${m.content}</div>`;
+    } else if (m.type === 'emperor') {
+      html += `<div class="msg-bubble msg-emperor"><div class="msg-speaker">👑 皇帝</div>${m.content}</div>`;
+    } else if (m.type === 'decree') {
+      html += `<div class="msg-bubble msg-decree">📜 天命降临 📜<br>${m.content}</div>`;
+    } else if (m.type === 'official') {
+      const emo = EMOTION_MAP[m.emotion] || '🤔';
+      const color = CHAR_COLOR[m.speaker_id] || 'var(--text2)';
+      html += `<div class="msg-bubble msg-official">
+        <div class="msg-speaker"><span style="color:${color}">${CHAR_EMOJI[m.speaker_id]||''} ${m.speaker}</span> <span class="msg-emotion">${emo} ${m.emotion||''}</span></div>
+        ${m.content}
+      </div>`;
+    }
+  }
+  container.innerHTML = html;
+  container.scrollTop = container.scrollHeight;
+}
+
+// ─── SIMULATE ───
+let simPollTimer = null;
+
+async function simulateDay() {
+  const btn = document.getElementById('btnSimDay');
+  const status = document.getElementById('simStatus');
+  const log = document.getElementById('simLog');
+  btn.disabled = true;
+  status.textContent = '模拟进行中...';
+  status.style.color = 'var(--gold)';
+  log.textContent = '正在推进新的一天，AI Agent 们正在交互...\n';
+
+  await api('/api/simulate-day', 'POST');
+
+  // 轮询模拟状态
+  simPollTimer = setInterval(async () => {
+    const st = await api('/api/simulation-status');
+    if (!st.running) {
+      clearInterval(simPollTimer);
+      btn.disabled = false;
+      status.textContent = '模拟完成';
+      status.style.color = 'var(--green)';
+      // 获取完整日志
+      const logData = await api('/api/simulation-log');
+      if (logData.log) {
+        log.textContent = logData.log.join('\n');
+      }
+      refresh();
+    }
+  }, 2000);
+}
+
+// ─── TABS ───
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    const id = tab.dataset.tab;
+    document.getElementById('panel-' + id).classList.add('active');
+    currentTab = id;
+    if (id === 'discuss') renderDiscussPanel();
+  });
+});
+
+// ─── INIT ───
+startPolling();
+</script>
+</body>
+</html>

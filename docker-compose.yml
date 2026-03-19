@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  palace-intrigue:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - PORT=8080
+    volumes:
+      - ./data:/app/data
+      - ./agents:/app/agents:ro
+    restart: unless-stopped
